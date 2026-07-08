@@ -9,6 +9,18 @@
 Это та самая «спека, по которой настраивал» — клонируешь, запускаешь `install.sh`,
 выполняешь пару команд с `sudo`, и получаешь такой же терминал.
 
+> **Два слоя красоты — важно понимать разницу.**
+> «Красота» терминала делится на два независимых слоя:
+>
+> - **Слой оболочки** (fish + tide + eza + автоподсказки + подсветка ввода) — работает
+>   в **любом** эмуляторе терминала, лишь бы стоял Nerd Font. Не зависит от Ghostty.
+> - **Слой эмулятора** (тема, лигатуры, сплиты, прозрачность, GPU-рендер) — свой у
+>   каждого терминала.
+>
+> Поэтому Ghostty **не обязателен**: тот же fish + tide + eza прекрасно живут в
+> `xfce4-terminal`, `gnome-terminal`, `kitty` и т.д. Ниже описаны оба пути —
+> Ghostty и xfce4-terminal (см. [Вариант без Ghostty](#вариант-без-ghostty-xfce4-terminal)).
+
 ---
 
 ## Что внутри
@@ -19,7 +31,7 @@
 | fish 4.x | дружелюбная командная оболочка | PPA `fish-shell/release-4` (`sudo`) |
 | fisher | менеджер плагинов fish | `install.sh` |
 | tide v6 | быстрый информативный промпт | `install.sh` (через fisher) |
-| JetBrainsMono Nerd Font | шрифт с иконками | `install.sh` → `~/.local/share/fonts` |
+| JetBrainsMono Nerd Font | шрифт с иконками (для Ghostty) | `install.sh` → `~/.local/share/fonts` |
 | eza | цветной `ls` с иконками и git | `install.sh` → `~/.local/bin` |
 
 > **Зачем fish из PPA, а не из apt.** tide v6 требует свежий fish (4.x), а в apt
@@ -32,6 +44,9 @@
 - Ubuntu 22.04+ с графической оболочкой (Ghostty — GUI-приложение).
 - `snap`, `curl`, `unzip`, `fontconfig` (`fc-cache`) — обычно уже есть.
 - Архитектура x86_64 (бинарь eza в `install.sh` под неё; для arm64 поправь URL в скрипте).
+- **Для Ghostty — GPU с OpenGL ≥ 4.3.** На старых картах Ghostty не стартует
+  (см. [Проблемы и решения](#проблемы-и-решения)). В этом случае используй
+  вариант с xfce4-terminal.
 
 ---
 
@@ -69,6 +84,47 @@ tide configure
 
 ---
 
+## Вариант без Ghostty: xfce4-terminal
+
+Если Ghostty не подходит (старая видеокарта без OpenGL 4.3, неудобства с раскладкой
+для `Ctrl`-сочетаний, просто привычнее штатный терминал XFCE) — весь shell-слой
+(fish + tide + eza) работает в `xfce4-terminal` без изменений. Нужны только **шрифт**
+и **цвета**.
+
+### Шрифт
+
+В `xfce4-terminal`: **Правка → Настройки → Внешний вид → Шрифт** — выбрать любой
+установленный Nerd Font (например `UbuntuMono Nerd Font Mono` или `JetBrainsMono Nerd Font`),
+размер по вкусу. Или задать в `~/.config/xfce4/terminal/terminalrc`:
+
+```ini
+FontName=UbuntuMono Nerd Font Mono 13
+```
+
+### Цвета — палитра far2l (VGA)
+
+В репозитории лежит переносимая цветосхема `config/xfce4-terminal/colorschemes/far2l.theme` —
+классическая 16-цветная VGA-палитра как в [far2l](https://github.com/elfmz/far2l)
+(чёрный фон, светло-серый текст). Установка:
+
+```sh
+mkdir -p ~/.local/share/xfce4/terminal/colorschemes
+cp config/xfce4-terminal/colorschemes/far2l.theme ~/.local/share/xfce4/terminal/colorschemes/
+```
+
+Затем **Правка → Настройки → Цвета → Предустановленные схемы → far2l VGA**.
+
+> **Тонкость палитры.** У far2l/DOS другая нумерация цветов: индекс 1 — синий,
+> 4 — красный. В ANSI наоборот (1 — красный, 4 — синий). В `far2l.theme` цвета уже
+> переставлены под ANSI, иначе синий и красный поменялись бы местами. Источник
+> оригинальных значений — `~/.config/far2l/palette.ini` (использован foreground-набор,
+> он чуть ярче background-набора и лучше читается на тёмном фоне).
+
+Полный эталонный `terminalrc` (шрифт + палитра + прочие настройки) — в
+`config/xfce4-terminal/terminalrc`, для справки.
+
+---
+
 ## Структура репозитория
 
 ```
@@ -85,12 +141,16 @@ ghostfish/
 │   │       ├── nord.conf
 │   │       ├── kanagawa-wave.conf
 │   │       └── everforest-soft.conf
-│   └── fish/
-│       ├── config.fish        # интерактивные настройки (zoxide/fzf — если стоят)
-│       ├── fish_plugins       # список плагинов для fisher (fisher, tide)
-│       ├── conf.d/            # env, алиасы, аббревиатуры, пресет tide
-│       ├── functions/         # функция theme — переключение тем
-│       └── completions/       # автодополнение для theme
+│   ├── fish/
+│   │   ├── config.fish        # интерактивные настройки (zoxide/fzf — если стоят)
+│   │   ├── fish_plugins       # список плагинов для fisher (fisher, tide)
+│   │   ├── conf.d/            # env, алиасы, аббревиатуры, пресет tide
+│   │   ├── functions/         # функция theme — переключение тем
+│   │   └── completions/       # автодополнение для theme
+│   └── xfce4-terminal/        # вариант без Ghostty
+│       ├── terminalrc         # эталонный конфиг (шрифт + палитра far2l)
+│       └── colorschemes/
+│           └── far2l.theme    # переносимая VGA-палитра far2l
 └── README.md
 ```
 
@@ -98,6 +158,8 @@ ghostfish/
 репозиторий: каталог `ghostty` — целиком, файлы `fish` — пофайлово (чтобы плагины,
 которые fisher ставит в `~/.config/fish`, не попадали в репозиторий). Правишь файл
 в репозитории — изменение сразу в системе и под версионным контролем.
+(Конфиги `xfce4-terminal` `install.sh` пока **не** трогает — ставятся вручную,
+см. [Вариант без Ghostty](#вариант-без-ghostty-xfce4-terminal).)
 
 ---
 
@@ -147,13 +209,18 @@ tide configure      # lean / rainbow / classic, цвета, иконки, одн
 | `Ctrl+Shift+←↑↓→` | переход между сплитами |
 | `Ctrl+Shift+C` / `V` | копировать / вставить |
 
+**xfce4-terminal**: размер шрифта — `Ctrl + =` / `Ctrl + -` / `Ctrl + 0`;
+новая вкладка — `Ctrl+Shift+T`; копировать/вставить — `Ctrl+Shift+C` / `V`.
+
 ---
 
 ## Размер и шрифт
 
-Размер шрифта — в `config/ghostty/config` (`font-size = 12`) или на лету клавишами
+**Ghostty**: размер — в `config/ghostty/config` (`font-size = 12`) или на лету
 `Ctrl + =` / `Ctrl + -`. Сменить шрифт — поправь `font-family` (имя должно совпадать
 с установленным Nerd Font; список: `fc-list | grep Nerd`).
+
+**xfce4-terminal**: `FontName` в `terminalrc` или через GUI (Внешний вид → Шрифт).
 
 ---
 
@@ -173,6 +240,58 @@ curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh 
 
 ---
 
+## Проблемы и решения
+
+### Ghostty падает: `error.OpenGLOutdated` / `SurfaceError`
+
+В логе (`ghostty` из терминала) видно:
+
+```
+info(opengl): loaded OpenGL 3.3
+warning(opengl): OpenGL version is too old. Ghostty requires OpenGL 4.3
+warning(gtk_ghostty_surface): surface failed to initialize err=error.SurfaceError
+```
+
+**Причина:** видеокарта отдаёт OpenGL ниже 4.3 (например GeForce 210 на nouveau —
+максимум 3.3). Длинные `Gtk: Theme parser error` в логе — посторонний шум, к падению
+отношения не имеют.
+
+**Обходной путь** — программный рендеринг через Mesa llvmpipe (OpenGL 4.5, на CPU):
+
+```sh
+LIBGL_ALWAYS_SOFTWARE=1 ghostty
+```
+
+Проверить, что llvmpipe даёт нужную версию: `LIBGL_ALWAYS_SOFTWARE=1 glxinfo | grep "OpenGL core"`.
+Минус — рендер на CPU (возможны подтормаживания прокрутки). **Не** ставь
+`LIBGL_ALWAYS_SOFTWARE=1` глобально, иначе на CPU уедет весь GUI. Если железо слабое —
+проще перейти на [xfce4-terminal](#вариант-без-ghostty-xfce4-terminal).
+
+### Ghostty: `Ctrl+C` не работает при русской раскладке
+
+Особенность GTK4: при не-латинской раскладке `Ctrl+C` шлёт кириллическую «С»,
+приложение его не распознаёт (например, не выйти из TUI). Приходится переключать
+раскладку на английскую. Надёжного решения нет. В `xfce4-terminal` (движок VTE)
+такой проблемы нет — `Ctrl`-сочетания работают при любой раскладке.
+
+### xfce4-terminal: новый шрифт/цвета не подхватываются в новом окне
+
+`xfce4-terminal` по умолчанию работает как **единый процесс-демон**: все окна
+открывает один процесс, который держит настройки в памяти с момента своего старта.
+Правки `terminalrc` на диске новые окна того же демона могут не подхватить.
+
+**Решение** — заставить перечитать конфиг:
+
+```sh
+# Разовое окно свежим процессом (читает terminalrc заново):
+xfce4-terminal --disable-server &
+
+# Либо полный перезапуск демона: закрыть ВСЕ окна xfce4-terminal
+# и открыть терминал заново.
+```
+
+---
+
 ## Удаление
 
 Симлинки указывают в этот репозиторий, поэтому достаточно их убрать:
@@ -182,5 +301,7 @@ rm -rf ~/.config/ghostty
 rm ~/.config/fish/config.fish ~/.config/fish/fish_plugins
 rm ~/.config/fish/conf.d/{env,aliases,abbr,tide}.fish
 rm ~/.config/fish/functions/theme.fish ~/.config/fish/completions/theme.fish
+# xfce4-terminal: удалить схему far2l и вернуть шрифт/цвета в настройках.
+rm -f ~/.local/share/xfce4/terminal/colorschemes/far2l.theme
 # при первом запуске install.sh делал бэкапы *.bak.<дата> — верни их при желании.
 ```

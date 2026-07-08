@@ -1,0 +1,7 @@
+[Scheme]
+Name=far2l VGA
+Comment=Классическая 16-цветная VGA-палитра far2l (из ~/.config/far2l/palette.ini). Порядок цветов переставлен в ANSI (в far2l/DOS 1=синий, 4=красный — в ANSI наоборот).
+ColorForeground=#c0c0c0
+ColorBackground=#000000
+ColorCursor=#c0c0c0
+ColorPalette=#000000;#a00000;#00a000;#a0a000;#0028a0;#a000a0;#00a0a0;#c0c0c0;#808080;#ff0000;#00ff00;#ffff00;#0055ff;#ff00ff;#00ffff;#ffffff
